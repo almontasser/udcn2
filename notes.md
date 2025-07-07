@@ -120,6 +120,7 @@ Here are the commands to run the μDCN benchmarks and tools:
   - --iface: Network interface (default: eth0)
   - --stats-interval: Statistics reporting interval in seconds (default: 5)
   - --verbose: Enable detailed statistics
+  - --xdp: Start the XDP loader on the specified interface before running commands
 
   7. Expected Output
 
