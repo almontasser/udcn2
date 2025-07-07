@@ -15,6 +15,7 @@ serde_json = { workspace = true, features = ["std"] }
 tokio = { workspace = true, features = ["full"] }
 udcn2-common = { path = "../udcn2-common" }
 udcn2-quic = { path = "../udcn2-quic" }
+udcn2 = { path = "../udcn2" }
 
 [[bin]]
 name = "test-server"
