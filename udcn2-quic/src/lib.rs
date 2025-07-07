@@ -52,15 +52,13 @@ impl QuicTransport {
 
     pub async fn send_interest(&self, interest: Interest, addr: SocketAddr) -> Result<Data> {
         let connection = self.endpoint.connect(addr, "localhost")?.await?;
-        let mut stream = connection.open_uni().await?;
-        
+        let (mut send, mut recv) = connection.open_bi().await?;
+
         let packet = NdnPacket::Interest(interest);
         let data = serde_json::to_vec(&packet)?;
-        stream.write_all(&data).await?;
-        stream.finish()?;
-        
-        // Wait for response on a bi-directional stream
-        let (_send, mut recv) = connection.open_bi().await?;
+        send.write_all(&data).await?;
+        send.finish()?;
+
         let response = recv.read_to_end(usize::MAX).await?;
         let response_packet: NdnPacket = serde_json::from_slice(&response)?;
         
@@ -136,10 +134,11 @@ pub fn generate_dummy_cert() -> Result<(Vec<CertificateDer<'static>>, PrivateKey
 #[cfg(test)]
 mod tests {
     use super::*;
-    use tokio_test;
 
     #[tokio::test]
     async fn test_quic_transport_creation() {
+        let _ = rustls::crypto::aws_lc_rs::default_provider()
+            .install_default();
         let addr = "127.0.0.1:0".parse().unwrap();
         let transport = QuicTransport::new(addr).unwrap();
         assert!(transport.endpoint.local_addr().is_ok());

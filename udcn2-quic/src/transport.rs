@@ -49,7 +49,7 @@ impl PacketStream {
         
         // Send the Interest
         send_stream.write_all(&serialized).await?;
-        send_stream.finish().await?;
+        send_stream.finish()?;
         
         // Wait for the Data response
         let response_data = timeout(
@@ -82,12 +82,14 @@ impl PacketStream {
     }
     
     /// Handle incoming stream and respond (for server/forwarder)
-    pub async fn handle_incoming_stream(&self) -> Result<Option<(NdnPacket, Box<dyn FnOnce(NdnPacket) -> Result<()> + Send>)>> {
+    pub async fn handle_incoming_stream(
+        &self,
+    ) -> Result<Option<(NdnPacket, Box<dyn FnOnce(NdnPacket) -> Result<()> + Send>)>> {
         match self.connection.accept_bi().await {
             Ok((send_stream, mut recv_stream)) => {
                 let data = recv_stream.read_to_end(self.config.max_packet_size).await?;
                 let packet: NdnPacket = serde_json::from_slice(&data)?;
-                
+
                 // Create response closure
                 let responder = Box::new(move |response: NdnPacket| -> Result<()> {
                     tokio::task::block_in_place(move || {
@@ -95,12 +97,12 @@ impl PacketStream {
                             let mut send_stream = send_stream;
                             let response_data = serde_json::to_vec(&response)?;
                             send_stream.write_all(&response_data).await?;
-                            send_stream.finish().await?;
+                            send_stream.finish()?;
                             Ok(())
                         })
                     })
                 });
-                
+
                 Ok(Some((packet, responder)))
             }
             Err(quinn::ConnectionError::ApplicationClosed(_)) => Ok(None),
@@ -164,7 +166,6 @@ impl ConnectionManager {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use tokio_test;
 
     #[tokio::test]
     async fn test_transport_config_default() {
