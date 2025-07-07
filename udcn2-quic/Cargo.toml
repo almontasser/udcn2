@@ -1,0 +1,20 @@
+[package]
+name = "udcn2-quic"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+anyhow = { workspace = true, features = ["std"] }
+bytes = { workspace = true, features = ["std"] }
+log = { workspace = true }
+quinn = { workspace = true, features = ["default"] }
+rcgen = { workspace = true, features = ["default"] }
+rustls = { workspace = true, features = ["default"] }
+serde = { workspace = true, features = ["std"] }
+serde_json = { workspace = true, features = ["std"] }
+thiserror = { workspace = true }
+tokio = { workspace = true, features = ["full"] }
+udcn2-common = { path = "../udcn2-common" }
+
+[dev-dependencies]
+tokio-test = "0.4"

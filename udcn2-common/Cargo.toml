@@ -1,0 +1,21 @@
+[package]
+name = "udcn2-common"
+version = "0.1.0"
+edition = "2021"
+
+license.workspace = true
+
+[features]
+default = ["std"]
+std = ["bytes/std", "serde/std", "serde_json/std"]
+user = ["aya"]
+
+[dependencies]
+aya = { workspace = true, optional = true }
+bytes = { workspace = true, optional = true }
+serde = { workspace = true, optional = true }
+serde_json = { workspace = true, optional = true }
+thiserror = { workspace = true }
+
+[lib]
+path = "src/lib.rs"

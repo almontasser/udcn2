@@ -1,0 +1,24 @@
+[package]
+name = "udcn2-cli"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+anyhow = { workspace = true, features = ["std"] }
+bytes = { workspace = true, features = ["std"] }
+clap = { workspace = true, features = ["derive"] }
+env_logger = { workspace = true }
+log = { workspace = true }
+rustls = { workspace = true, features = ["aws_lc_rs"] }
+serde = { workspace = true, features = ["std"] }
+serde_json = { workspace = true, features = ["std"] }
+tokio = { workspace = true, features = ["full"] }
+udcn2-common = { path = "../udcn2-common" }
+udcn2-quic = { path = "../udcn2-quic" }
+
+[[bin]]
+name = "test-server"
+path = "src/bin/test-server.rs"
+
+[dev-dependencies]
+tokio-test = "0.4"
