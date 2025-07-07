@@ -44,6 +44,8 @@ Example:
 RUST_LOG=info ./target/release/udcn2-cli interest --server 127.0.0.1:4433 \
     --name /example/data --count 10 --xdp eth0
 ```
+Running with `--xdp` requires root privileges so that the eBPF program can be
+attached to the selected interface.
 
 ## License
 
