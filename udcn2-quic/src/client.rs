@@ -133,10 +133,11 @@ impl ServerCertVerifier for SkipServerVerification {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use tokio_test;
 
     #[tokio::test]
     async fn test_quic_client_creation() {
+        let _ = rustls::crypto::aws_lc_rs::default_provider()
+            .install_default();
         let addr = "127.0.0.1:0".parse().unwrap();
         let client = QuicClient::new(addr).unwrap();
         assert!(client.local_addr().is_ok());
@@ -144,6 +145,8 @@ mod tests {
     
     #[tokio::test]
     async fn test_insecure_client_creation() {
+        let _ = rustls::crypto::aws_lc_rs::default_provider()
+            .install_default();
         let addr = "127.0.0.1:0".parse().unwrap();
         let client = QuicClient::insecure(addr).unwrap();
         assert!(client.local_addr().is_ok());

@@ -13,9 +13,8 @@ pub struct QuicServer {
     message_rx: mpsc::UnboundedReceiver<ServerMessage>,
 }
 
-#[derive(Debug)]
 pub enum ServerMessage {
-    Interest(Interest, PacketStream),
+    Interest(Interest, Box<dyn FnOnce(NdnPacket) -> Result<()> + Send>),
     Data(Data, PacketStream),
     ConnectionClosed(SocketAddr),
 }
@@ -79,8 +78,8 @@ impl QuicServer {
                 // Handle server messages
                 msg = self.message_rx.recv() => {
                     match msg {
-                        Some(ServerMessage::Interest(interest, stream)) => {
-                            self.handle_interest(interest, stream).await;
+                        Some(ServerMessage::Interest(interest, responder)) => {
+                            self.handle_interest(interest, responder).await;
                         }
                         Some(ServerMessage::Data(data, stream)) => {
                             self.handle_data(data, stream).await;
@@ -103,10 +102,10 @@ impl QuicServer {
     ) -> Result<()> {
         loop {
             match stream.handle_incoming_stream().await {
-                Ok(Some(packet)) => {
+                Ok(Some((packet, responder))) => {
                     match packet {
                         NdnPacket::Interest(interest) => {
-                            if let Err(e) = tx.send(ServerMessage::Interest(interest, stream.clone())) {
+                            if let Err(e) = tx.send(ServerMessage::Interest(interest, responder)) {
                                 log::error!("Failed to send interest message: {}", e);
                                 break;
                             }
@@ -133,7 +132,11 @@ impl QuicServer {
         Ok(())
     }
     
-    async fn handle_interest(&self, interest: Interest, stream: PacketStream) {
+    async fn handle_interest(
+        &self,
+        interest: Interest,
+        responder: Box<dyn FnOnce(NdnPacket) -> Result<()> + Send>,
+    ) {
         log::info!("Received Interest: {}", interest.name());
         
         // For demo purposes, create a simple Data response
@@ -142,7 +145,7 @@ impl QuicServer {
             format!("Data for {}", interest.name()).into_bytes(),
         );
         
-        if let Err(e) = stream.send_data(data).await {
+        if let Err(e) = responder(NdnPacket::Data(data)) {
             log::error!("Failed to send data response: {}", e);
         }
     }
@@ -163,10 +166,11 @@ impl QuicServer {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use tokio_test;
 
     #[tokio::test]
     async fn test_quic_server_creation() {
+        let _ = rustls::crypto::aws_lc_rs::default_provider()
+            .install_default();
         let addr = "127.0.0.1:0".parse().unwrap();
         let server = QuicServer::new(addr).unwrap();
         assert!(server.local_addr().is_ok());

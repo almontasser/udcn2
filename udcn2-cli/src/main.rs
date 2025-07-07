@@ -12,6 +12,9 @@ use udcn2_quic::QuicTransport;
 struct Cli {
     #[command(subcommand)]
     command: Commands,
+    /// Optional network interface for starting the XDP program
+    #[arg(long)]
+    xdp: Option<String>,
 }
 
 #[derive(Subcommand)]
@@ -56,6 +59,16 @@ async fn main() -> Result<()> {
     
     let cli = Cli::parse();
 
+    let xdp_task = if let Some(iface) = cli.xdp.clone() {
+        Some(tokio::spawn(async move {
+            if let Err(e) = udcn2::run_xdp(&iface).await {
+                log::error!("XDP loader failed: {}", e);
+            }
+        }))
+    } else {
+        None
+    };
+
     match &cli.command {
         Commands::Interest { server, name, count, interval } => {
             run_interest_test(*server, name, *count, *interval).await?;
@@ -63,6 +76,10 @@ async fn main() -> Result<()> {
         Commands::Benchmark { server, connections, duration } => {
             run_benchmark(*server, *connections, *duration).await?;
         }
+    }
+
+    if let Some(task) = xdp_task {
+        task.abort();
     }
 
     Ok(())

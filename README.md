@@ -32,6 +32,19 @@ CC=${ARCH}-linux-musl-gcc cargo build --package udcn2 --release \
 The cross-compiled program `target/${ARCH}-unknown-linux-musl/release/udcn2` can be
 copied to a Linux server or VM and run there.
 
+## CLI Usage
+
+`udcn2-cli` provides utilities for sending Interests and running benchmarks.
+When the optional `--xdp` flag is supplied, the tool starts the XDP loader on
+the specified interface before executing the chosen command.
+
+Example:
+
+```shell
+RUST_LOG=info ./target/release/udcn2-cli interest --server 127.0.0.1:4433 \
+    --name /example/data --count 10 --xdp eth0
+```
+
 ## License
 
 With the exception of eBPF code, udcn2 is distributed under the terms
